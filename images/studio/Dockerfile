@@ -9,5 +9,7 @@ COPY --from=voice /opt/venv /opt/voice
 RUN sed -i 's#/opt/venv#/opt/voice#g' /opt/voice/bin/activate /opt/voice/pyvenv.cfg 2>/dev/null; \
     /opt/voice/bin/python -c "import kokoro, faster_whisper, chatterbox, torch; print('voice env ok', torch.__version__)" \
     && python -c "import torch; print('comfy env', torch.__version__)"
+RUN mkdir -p /root/.ssh /etc/ssh/sshd_config.d && chmod 700 /root/.ssh \
+    && printf 'StrictModes no\n' > /etc/ssh/sshd_config.d/vgpu.conf
 WORKDIR /workspace
 LABEL org.opencontainers.image.source=https://github.com/devgitflow/vgpu-images

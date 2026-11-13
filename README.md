@@ -14,6 +14,7 @@ Everything a job needs is baked in, so the rented box spends its paid time on th
 | `ghcr.io/devgitflow/vgpu-avatar` | torch 2.8.0 cu128, TensorRT 10, onnxruntime-gpu, LivePortrait, Ditto | talking head avatars |
 | `ghcr.io/devgitflow/vgpu-llm` | Ollama, llama.cpp and whisper.cpp built for sm_89 and sm_120 | LLM serving, fast speech recognition |
 | `ghcr.io/devgitflow/vgpu-train` | torch 2.8.0 cu128, Unsloth, TRL, PEFT, bitsandbytes, DeepSpeed, diffusers, ai-toolkit | LLM fine tuning, image and video LoRA training |
+| `ghcr.io/devgitflow/vgpu-studio` | vgpu-comfyui plus the vgpu-voice environment at `/opt/voice` | video and narration on one box |
 
 No model weights are baked in. A 30 GB image would take minutes to pull on any host that has not cached it, while the same weights come from Hugging Face in a minute or two on a well connected box.
 
