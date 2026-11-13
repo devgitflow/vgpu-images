@@ -30,8 +30,9 @@ RUN cd $COMFY/custom_nodes && for r in \
     && for d in */; do [ -f "$d/requirements.txt" ] && uv pip install --python /opt/venv/bin/python -r "$d/requirements.txt" || true; done
 
 RUN uv pip install --python /opt/venv/bin/python sageattention==1.0.6 hf_transfer huggingface_hub \
-    && uv pip install --python /opt/venv/bin/python torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 \
-      --index-url https://download.pytorch.org/whl/cu128
+    && uv pip install --python /opt/venv/bin/python torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --reinstall \
+      --index-url https://download.pytorch.org/whl/cu128 \
+    && (/opt/venv/bin/python -m pip list 2>/dev/null || uv pip list --python /opt/venv/bin/python) | grep -iE '^(torch|nvidia)'
 
 RUN python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, f); assert 'sm_120' in f" \
     && cd $COMFY && python main.py --cpu --quick-test-for-ci

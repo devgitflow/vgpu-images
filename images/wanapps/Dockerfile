@@ -17,8 +17,9 @@ RUN git clone --depth 1 https://github.com/deepbeepmeep/Wan2GP /opt/Wan2GP \
     && uv pip install --python /opt/venv/bin/python -r /opt/Wan2GP/requirements.txt --index-strategy unsafe-best-match \
     && uv pip install --python /opt/venv/bin/python hf_transfer \
        https://github.com/deepbeepmeep/SageAttention/releases/download/v2.2.0-linux.cg1/sageattention-2.2.0+cu130torch2.10.0.cg1-cp311-cp311-linux_x86_64.whl \
-    && uv pip install --python /opt/venv/bin/python torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0 \
-      --index-url https://download.pytorch.org/whl/cu130
+    && uv pip install --python /opt/venv/bin/python torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0 --reinstall \
+      --index-url https://download.pytorch.org/whl/cu130 \
+    && (/opt/venv/bin/python -m pip list 2>/dev/null || uv pip list --python /opt/venv/bin/python) | grep -iE '^(torch|nvidia)'
 RUN python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, f); assert 'sm_120' in f; import sageattention"
 
 # Vast copies the account key in at start; on some hosts it lands with the wrong owner and sshd's
