@@ -14,3 +14,5 @@ GitHub Actions builds each folder under `images/` on push and tags it `latest` p
 For a project image, start `FROM` one of these, copy the source in and run `cargo build --release` during the build. The compile then happens on the CI runner and the GPU box only runs the binary.
 
 Host requirement: an NVIDIA driver new enough for CUDA 12.8 (570 or later).
+
+Both images set `NVIDIA_DRIVER_CAPABILITIES=all`. The NVIDIA base images ask only for compute and utility, and on some hosts that hides the NVENC encoder from the container.

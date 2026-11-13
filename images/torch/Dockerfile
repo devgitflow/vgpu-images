@@ -1,7 +1,7 @@
 # PyTorch for Blackwell (cu128 wheels) + video tools. Used for model inference jobs.
 FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04
 
-ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 LC_ALL=C.UTF-8 PIP_NO_CACHE_DIR=1 \
+ENV NVIDIA_DRIVER_CAPABILITIES=all DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 LC_ALL=C.UTF-8 PIP_NO_CACHE_DIR=1 \
     PIP_BREAK_SYSTEM_PACKAGES=1 HF_HUB_ENABLE_HF_TRANSFER=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \

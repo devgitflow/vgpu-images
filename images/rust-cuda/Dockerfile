@@ -3,7 +3,7 @@
 # and install time after the box is running is.
 FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu24.04
 
-ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 LC_ALL=C.UTF-8 \
+ENV NVIDIA_DRIVER_CAPABILITIES=all DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 LC_ALL=C.UTF-8 \
     RUSTUP_HOME=/opt/rustup CARGO_HOME=/opt/cargo PATH=/opt/cargo/bin:$PATH \
     CARGO_TERM_COLOR=never CUDA_COMPUTE_CAP=120
 
