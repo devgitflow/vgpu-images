@@ -25,4 +25,4 @@ RUN nvcc --version && rustc --version && cargo --version && ffmpeg -hide_banner 
 
 WORKDIR /workspace
 
-LABEL org.opencontainers.image.source=https://github.com/devgitaltrosyn/vgpu-images
+LABEL org.opencontainers.image.source=https://github.com/devgitflow/vgpu-images

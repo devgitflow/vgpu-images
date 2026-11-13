@@ -13,9 +13,9 @@ RUN pip3 install --index-url https://download.pytorch.org/whl/cu128 torch torchv
     && pip3 install numpy pillow opencv-python-headless imageio imageio-ffmpeg \
        huggingface_hub hf_transfer safetensors accelerate transformers diffusers tqdm
 
-RUN python3 -c "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.get_arch_list())" \
-    && python3 -c "import torch; assert 'sm_120' in torch.cuda.get_arch_list(), 'no Blackwell kernels'"
+# get_arch_list() is empty without a GPU, so read the compiled arch flags instead
+RUN python3 -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, torch.version.cuda, f); assert 'sm_120' in f, 'no Blackwell kernels'"
 
 WORKDIR /workspace
 
-LABEL org.opencontainers.image.source=https://github.com/devgitaltrosyn/vgpu-images
+LABEL org.opencontainers.image.source=https://github.com/devgitflow/vgpu-images
