@@ -16,11 +16,18 @@ RUN $UVP torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://
 RUN $UVP unsloth unsloth_zoo trl peft bitsandbytes datasets accelerate deepspeed liger-kernel \
       transformers diffusers safetensors sentencepiece protobuf einops tensorboard huggingface_hub hf_transfer \
       wandb soundfile librosa pyyaml omegaconf
-RUN git clone --depth 1 https://github.com/ostris/ai-toolkit /opt/ai-toolkit \
-    && cd /opt/ai-toolkit && $UVP -r requirements.txt --index-strategy unsafe-best-match
 RUN $UVP torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --reinstall --index-url https://download.pytorch.org/whl/cu128 \
-    && $UVP "numpy<2" \
     && uv pip list --python /opt/venv/bin/python | grep -iE '^(torch|nvidia|unsloth|trl|peft|bitsandbytes|numpy)'
+
+# ai-toolkit pins numpy 1.26 while datasets/pyarrow above need numpy 2, so it gets its own environment:
+#   /opt/aitk/bin/python /opt/ai-toolkit/run.py config.yaml
+RUN git clone --depth 1 https://github.com/ostris/ai-toolkit /opt/ai-toolkit \
+    && uv venv --python 3.11 /opt/aitk \
+    && uv pip install --python /opt/aitk/bin/python torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128 \
+    && cd /opt/ai-toolkit && uv pip install --python /opt/aitk/bin/python -r requirements.txt --index-strategy unsafe-best-match \
+    && uv pip install --python /opt/aitk/bin/python torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --reinstall-package torch \
+       --reinstall-package torchvision --reinstall-package torchaudio --index-url https://download.pytorch.org/whl/cu128 \
+    && /opt/aitk/bin/python -c "import torch, numpy; print('aitk env', torch.__version__, numpy.__version__)"
 RUN python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, f); assert 'sm_120' in f; import trl, peft, bitsandbytes, diffusers, datasets; print('train imports ok')"
 
 # Vast copies the account key in at start; on some hosts it lands with the wrong owner and sshd's
