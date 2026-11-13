@@ -21,7 +21,8 @@ RUN git clone --depth 1 https://github.com/KwaiVGI/LivePortrait /opt/LivePortrai
        scikit-image filetype colored cython huggingface_hub hf_transfer fastapi uvicorn opencv-python-headless \
     && $UVP torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --reinstall \
       --index-url https://download.pytorch.org/whl/cu128 \
-    && (/opt/venv/bin/python -m pip list 2>/dev/null || uv pip list --python /opt/venv/bin/python) | grep -iE '^(torch|nvidia)'
+    && $UVP "numpy<2.3" \
+    && (/opt/venv/bin/python -m pip list 2>/dev/null || uv pip list --python /opt/venv/bin/python) | grep -iE '^(torch|nvidia|numpy|scipy)'
 RUN python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, f); assert 'sm_120' in f; import tensorrt, onnxruntime; print('trt', tensorrt.__version__)"
 
 # Vast copies the account key in at start; on some hosts it lands with the wrong owner and sshd's
