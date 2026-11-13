@@ -9,7 +9,7 @@ ENV NVIDIA_DRIVER_CAPABILITIES=all DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 L
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential pkg-config clang lld cmake ninja-build git git-lfs curl wget ca-certificates \
-      rsync openssh-client unzip zstd pigz jq htop nvtop tmux \
+      rsync aria2 openssh-client unzip zstd pigz jq htop nvtop tmux \
       libssl-dev libclang-dev protobuf-compiler \
       ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavfilter-dev libavdevice-dev \
       python3 python3-pip python3-venv \

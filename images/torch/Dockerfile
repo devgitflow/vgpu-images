@@ -5,13 +5,16 @@ ENV NVIDIA_DRIVER_CAPABILITIES=all DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 L
     PIP_BREAK_SYSTEM_PACKAGES=1 HF_HUB_ENABLE_HF_TRANSFER=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      python3 python3-pip python3-dev git git-lfs curl wget ca-certificates rsync ffmpeg \
+      python3 python3-pip python3-venv python3-dev git git-lfs curl wget ca-certificates rsync aria2 ffmpeg \
       libgl1 libglib2.0-0 zstd pigz jq tmux \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install --index-url https://download.pytorch.org/whl/cu128 torch torchvision torchaudio \
-    && pip3 install numpy pillow opencv-python-headless imageio imageio-ffmpeg \
-       huggingface_hub hf_transfer safetensors accelerate transformers diffusers tqdm
+RUN python3 -m venv /opt/venv && /opt/venv/bin/pip install -q -U pip uv
+ENV PATH=/opt/venv/bin:$PATH
+RUN for n in 1 2 3; do uv pip install --python /opt/venv/bin/python torch==2.11.0 torchvision torchaudio \
+      --index-url https://download.pytorch.org/whl/cu128 && break; echo "retry $n"; sleep 5; done \
+    && uv pip install --python /opt/venv/bin/python numpy pillow opencv-python-headless imageio imageio-ffmpeg \
+       huggingface_hub hf_transfer safetensors accelerate transformers diffusers peft tqdm fastapi uvicorn
 
 # get_arch_list() is empty without a GPU, so read the compiled arch flags instead
 RUN python3 -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, torch.version.cuda, f); assert 'sm_120' in f, 'no Blackwell kernels'"
