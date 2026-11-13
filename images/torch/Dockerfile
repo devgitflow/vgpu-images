@@ -16,6 +16,10 @@ RUN pip3 install --index-url https://download.pytorch.org/whl/cu128 torch torchv
 # get_arch_list() is empty without a GPU, so read the compiled arch flags instead
 RUN python3 -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, torch.version.cuda, f); assert 'sm_120' in f, 'no Blackwell kernels'"
 
+# Vast copies the account key in at start; on some hosts it lands with the wrong owner and sshd's
+# StrictModes rejects it ("bad ownership or modes"). Single user container, so turn the check off.
+RUN mkdir -p /root/.ssh /etc/ssh/sshd_config.d && chmod 700 /root/.ssh \
+    && printf 'StrictModes no\n' > /etc/ssh/sshd_config.d/vgpu.conf
 WORKDIR /workspace
 
 LABEL org.opencontainers.image.source=https://github.com/devgitflow/vgpu-images

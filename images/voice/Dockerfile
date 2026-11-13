@@ -21,6 +21,10 @@ RUN $UVP "setuptools<81" wheel numpy soundfile librosa transformers accelerate s
 RUN python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, f); assert 'sm_120' in f" \
     && python -c "import kokoro, faster_whisper, chatterbox, snac, transformers; print('voice imports ok')"
 
+# Vast copies the account key in at start; on some hosts it lands with the wrong owner and sshd's
+# StrictModes rejects it ("bad ownership or modes"). Single user container, so turn the check off.
+RUN mkdir -p /root/.ssh /etc/ssh/sshd_config.d && chmod 700 /root/.ssh \
+    && printf 'StrictModes no\n' > /etc/ssh/sshd_config.d/vgpu.conf
 WORKDIR /workspace
 EXPOSE 8880
 LABEL org.opencontainers.image.source=https://github.com/devgitflow/vgpu-images

@@ -31,6 +31,10 @@ RUN curl -fsSL https://ollama.com/install.sh | sh && ollama --version || true
 COPY --from=build /out /opt/llm
 # binaries need libcuda from the host driver, so only check they exist here
 RUN ls -la /opt/llm/bin && test -x /opt/llm/bin/llama-server && test -x /opt/llm/bin/whisper-server
+# Vast copies the account key in at start; on some hosts it lands with the wrong owner and sshd's
+# StrictModes rejects it ("bad ownership or modes"). Single user container, so turn the check off.
+RUN mkdir -p /root/.ssh /etc/ssh/sshd_config.d && chmod 700 /root/.ssh \
+    && printf 'StrictModes no\n' > /etc/ssh/sshd_config.d/vgpu.conf
 WORKDIR /workspace
 EXPOSE 11434 8080
 LABEL org.opencontainers.image.source=https://github.com/devgitflow/vgpu-images

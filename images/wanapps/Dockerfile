@@ -21,6 +21,10 @@ RUN git clone --depth 1 https://github.com/deepbeepmeep/Wan2GP /opt/Wan2GP \
       --index-url https://download.pytorch.org/whl/cu130
 RUN python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, f); assert 'sm_120' in f; import sageattention"
 
+# Vast copies the account key in at start; on some hosts it lands with the wrong owner and sshd's
+# StrictModes rejects it ("bad ownership or modes"). Single user container, so turn the check off.
+RUN mkdir -p /root/.ssh /etc/ssh/sshd_config.d && chmod 700 /root/.ssh \
+    && printf 'StrictModes no\n' > /etc/ssh/sshd_config.d/vgpu.conf
 WORKDIR /workspace
 EXPOSE 7860
 LABEL org.opencontainers.image.source=https://github.com/devgitflow/vgpu-images

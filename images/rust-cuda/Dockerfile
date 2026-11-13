@@ -23,6 +23,10 @@ RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-too
 # sanity at build time (no GPU here, so only the toolchain)
 RUN nvcc --version && rustc --version && cargo --version && ffmpeg -hide_banner -encoders | grep -q nvenc
 
+# Vast copies the account key in at start; on some hosts it lands with the wrong owner and sshd's
+# StrictModes rejects it ("bad ownership or modes"). Single user container, so turn the check off.
+RUN mkdir -p /root/.ssh /etc/ssh/sshd_config.d && chmod 700 /root/.ssh \
+    && printf 'StrictModes no\n' > /etc/ssh/sshd_config.d/vgpu.conf
 WORKDIR /workspace
 
 LABEL org.opencontainers.image.source=https://github.com/devgitflow/vgpu-images
