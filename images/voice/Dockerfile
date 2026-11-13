@@ -18,6 +18,8 @@ RUN $UVP "setuptools<81" wheel numpy soundfile librosa transformers accelerate s
       faster-whisper kokoro "misaki[en]" qwen-tts pocket-tts \
     && $UVP --no-deps chatterbox-tts==0.1.7 \
     && $UVP torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128
+# Kokoro's English front end (misaki) loads this spaCy model at first use; fetching it on the box cost 30 s
+RUN python -m spacy download en_core_web_sm || $UVP en_core_web_sm@https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 RUN python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, f); assert 'sm_120' in f" \
     && python -c "import kokoro, faster_whisper, chatterbox, snac, transformers; print('voice imports ok')"
 
