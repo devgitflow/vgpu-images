@@ -24,3 +24,5 @@ RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-too
 RUN nvcc --version && rustc --version && cargo --version && ffmpeg -hide_banner -encoders | grep -q nvenc
 
 WORKDIR /workspace
+
+LABEL org.opencontainers.image.source=https://github.com/devgitaltrosyn/vgpu-images

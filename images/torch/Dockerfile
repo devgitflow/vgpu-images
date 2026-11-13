@@ -17,3 +17,5 @@ RUN python3 -c "import torch; print(torch.__version__, torch.version.cuda, torch
     && python3 -c "import torch; assert 'sm_120' in torch.cuda.get_arch_list(), 'no Blackwell kernels'"
 
 WORKDIR /workspace
+
+LABEL org.opencontainers.image.source=https://github.com/devgitaltrosyn/vgpu-images

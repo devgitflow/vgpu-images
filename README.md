@@ -6,8 +6,8 @@ Everything a job needs is baked in, so the rented box spends its paid time on th
 
 | image | base | contents |
 | --- | --- | --- |
-| `ghcr.io/sparkifly/vgpu-rust-cuda` | CUDA 12.8 cuDNN devel, Ubuntu 24.04 | Rust stable, sccache, cargo-chef, clang, cmake, ffmpeg with NVENC, Python 3 |
-| `ghcr.io/sparkifly/vgpu-torch` | CUDA 12.8 cuDNN runtime, Ubuntu 24.04 | PyTorch cu128, diffusers, transformers, accelerate, OpenCV, ffmpeg with NVENC |
+| `ghcr.io/devgitaltrosyn/vgpu-rust-cuda` | CUDA 12.8 cuDNN devel, Ubuntu 24.04 | Rust stable, sccache, cargo-chef, clang, cmake, ffmpeg with NVENC, Python 3 |
+| `ghcr.io/devgitaltrosyn/vgpu-torch` | CUDA 12.8 cuDNN runtime, Ubuntu 24.04 | PyTorch cu128, diffusers, transformers, accelerate, OpenCV, ffmpeg with NVENC |
 
 GitHub Actions builds each folder under `images/` on push and tags it `latest` plus the commit sha.
 
