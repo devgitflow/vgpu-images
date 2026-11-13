@@ -1,5 +1,6 @@
 # LLM serving and fast speech recognition without torch:
 # Ollama, llama.cpp llama-server and whisper.cpp whisper-server, both compiled for sm_89 and sm_120.
+# GGML_NATIVE=OFF: a native build used the CI runner's CPU instructions and crashed (Illegal instruction) on rented hosts.
 FROM nvidia/cuda:12.8.1-devel-ubuntu24.04 AS build
 ARG LLAMA_REF=b12233
 ARG WHISPER_REF=d1be6fd
@@ -8,12 +9,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends git cmake ninja
 RUN git clone https://github.com/ggml-org/llama.cpp /src/llama.cpp && cd /src/llama.cpp \
     && (git checkout -q "$LLAMA_REF" || echo "llama.cpp ref $LLAMA_REF missing, using default branch") \
     && cmake -B build -G Ninja -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES="89;120" -DLLAMA_CURL=ON \
-       -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
+       -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DGGML_NATIVE=OFF -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
     && cmake --build build -j"$(nproc)" --target llama-server llama-cli llama-bench
 RUN git clone https://github.com/ggml-org/whisper.cpp /src/whisper.cpp && cd /src/whisper.cpp \
     && (git checkout -q "$WHISPER_REF" || echo "whisper.cpp ref $WHISPER_REF missing, using default branch") \
     && cmake -B build -G Ninja -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES="89;120" -DCMAKE_BUILD_TYPE=Release \
-       -DBUILD_SHARED_LIBS=OFF -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
+       -DBUILD_SHARED_LIBS=OFF -DGGML_NATIVE=OFF -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
     && cmake --build build -j"$(nproc)" --target whisper-server whisper-cli
 RUN mkdir -p /out/bin /out/lib \
     && cp /src/llama.cpp/build/bin/llama-server /src/llama.cpp/build/bin/llama-cli /src/llama.cpp/build/bin/llama-bench /out/bin/ \
