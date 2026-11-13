@@ -17,8 +17,7 @@ RUN $UVP unsloth unsloth_zoo trl peft bitsandbytes datasets accelerate deepspeed
       transformers diffusers safetensors sentencepiece protobuf einops tensorboard huggingface_hub hf_transfer \
       wandb soundfile librosa pyyaml omegaconf
 RUN git clone --depth 1 https://github.com/ostris/ai-toolkit /opt/ai-toolkit \
-    && grep -viE '^(torch|torchvision|torchaudio)([=<> ]|$)' /opt/ai-toolkit/requirements.txt > /tmp/ait.txt \
-    && $UVP -r /tmp/ait.txt
+    && cd /opt/ai-toolkit && $UVP -r requirements.txt --index-strategy unsafe-best-match
 RUN $UVP torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --reinstall --index-url https://download.pytorch.org/whl/cu128 \
     && uv pip list --python /opt/venv/bin/python | grep -iE '^(torch|nvidia|unsloth|trl|peft|bitsandbytes)'
 RUN python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, f); assert 'sm_120' in f; import trl, peft, bitsandbytes, diffusers, datasets; print('train imports ok')"
