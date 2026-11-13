@@ -1,5 +1,6 @@
 # Training: LLM fine tuning (Unsloth, TRL, PEFT, bitsandbytes, DeepSpeed) and image LoRA training
-# (diffusers, ostris ai-toolkit for Flux / Z-Image / SDXL / Wan LoRAs). torch 2.8 cu128 for the 5090.
+# (diffusers, ostris ai-toolkit for Flux / Z-Image / SDXL / Wan LoRAs). torch 2.11 cu128 (current Unsloth and
+# torchao need it); ai-toolkit keeps torch 2.8 in its own environment.
 FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu24.04
 
 ENV NVIDIA_DRIVER_CAPABILITIES=all DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 LC_ALL=C.UTF-8 \
@@ -12,11 +13,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh \
     && uv venv --python 3.11 /opt/venv
 ENV UVP="uv pip install --python /opt/venv/bin/python"
-RUN $UVP torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128
+RUN $UVP torch==2.11.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 RUN $UVP unsloth unsloth_zoo trl peft bitsandbytes datasets accelerate deepspeed liger-kernel \
       transformers diffusers safetensors sentencepiece protobuf einops tensorboard huggingface_hub hf_transfer \
       wandb soundfile librosa pyyaml omegaconf
-RUN $UVP torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --reinstall --index-url https://download.pytorch.org/whl/cu128 \
+RUN $UVP torch==2.11.0 torchvision torchaudio --reinstall --index-url https://download.pytorch.org/whl/cu128 \
     && uv pip list --python /opt/venv/bin/python | grep -iE '^(torch|nvidia|unsloth|trl|peft|bitsandbytes|numpy)'
 
 # ai-toolkit pins numpy 1.26 while datasets/pyarrow above need numpy 2, so it gets its own environment:
