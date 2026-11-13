@@ -8,17 +8,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends git cmake ninja
 RUN git clone https://github.com/ggml-org/llama.cpp /src/llama.cpp && cd /src/llama.cpp \
     && (git checkout -q "$LLAMA_REF" || echo "llama.cpp ref $LLAMA_REF missing, using default branch") \
     && cmake -B build -G Ninja -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES="89;120" -DLLAMA_CURL=ON \
-       -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
+       -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
     && cmake --build build -j"$(nproc)" --target llama-server llama-cli llama-bench
 RUN git clone https://github.com/ggml-org/whisper.cpp /src/whisper.cpp && cd /src/whisper.cpp \
     && (git checkout -q "$WHISPER_REF" || echo "whisper.cpp ref $WHISPER_REF missing, using default branch") \
     && cmake -B build -G Ninja -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES="89;120" -DCMAKE_BUILD_TYPE=Release \
-       -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
+       -DBUILD_SHARED_LIBS=OFF -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
     && cmake --build build -j"$(nproc)" --target whisper-server whisper-cli
 RUN mkdir -p /out/bin /out/lib \
     && cp /src/llama.cpp/build/bin/llama-server /src/llama.cpp/build/bin/llama-cli /src/llama.cpp/build/bin/llama-bench /out/bin/ \
     && cp /src/whisper.cpp/build/bin/whisper-server /src/whisper.cpp/build/bin/whisper-cli /out/bin/ \
-    && find /src/llama.cpp/build /src/whisper.cpp/build -name '*.so*' -exec cp -P {} /out/lib/ \;
+    && echo "static builds: each binary carries its own ggml (both projects ship libggml*.so with the same names)"
 
 FROM nvidia/cuda:12.8.1-runtime-ubuntu24.04
 ENV NVIDIA_DRIVER_CAPABILITIES=all DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 LC_ALL=C.UTF-8 \
