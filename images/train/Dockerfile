@@ -27,7 +27,11 @@ RUN git clone --depth 1 https://github.com/ostris/ai-toolkit /opt/ai-toolkit \
     && uv pip freeze --python /opt/aitk/bin/python | grep -iE '^(torch|torchvision|torchaudio|triton|nvidia-)' > /opt/aitk-torch.txt && cat /opt/aitk-torch.txt \
     && cd /opt/ai-toolkit && uv pip install --python /opt/aitk/bin/python -c /opt/aitk-torch.txt -r requirements.txt \
     && /opt/aitk/bin/python -c "import torch, numpy; print('aitk env', torch.__version__, numpy.__version__)"
-RUN python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, f); assert 'sm_120' in f; import trl, peft, bitsandbytes, diffusers, datasets; print('train imports ok')"
+# some kernels (torchao, mslk) load the GPU driver library on import; the build machine has no GPU, so the check
+# runs against the CUDA stub driver. On a rented box the real driver is mounted.
+RUN mkdir -p /tmp/stub && ln -sf /usr/local/cuda/lib64/stubs/libcuda.so /tmp/stub/libcuda.so.1 \
+    && LD_LIBRARY_PATH=/tmp/stub:$LD_LIBRARY_PATH python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, f); assert 'sm_120' in f; import trl, peft, bitsandbytes, diffusers, datasets; print('train imports ok')" \
+    && rm -rf /tmp/stub
 
 # Vast copies the account key in at start; on some hosts it lands with the wrong owner and sshd's
 # StrictModes rejects it ("bad ownership or modes"). Single user container, so turn the check off.
