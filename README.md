@@ -10,7 +10,7 @@ Everything a job needs is baked in, so the rented box spends its paid time on th
 | `ghcr.io/devgitflow/vgpu-rust-cuda` | CUDA 12.8 devel, Rust stable, sccache, cargo-chef, ffmpeg NVENC | Rust and CUDA builds and runs |
 | `ghcr.io/devgitflow/vgpu-comfyui` | Python 3.12, torch 2.8.0 cu128, ComfyUI, SageAttention, VideoHelperSuite, KJNodes, WanVideoWrapper, MMAudio, GGUF | Wan 2.2 and 2.1 video, S2V, InfiniteTalk, LTX-2, foley, upscaling |
 | `ghcr.io/devgitflow/vgpu-wanapps` | CUDA 13, Python 3.11, torch 2.10 cu130, SageAttention 2.2, Wan2GP | Wan2GP web UI (needs a CUDA 13 driver on the host) |
-| `ghcr.io/devgitflow/vgpu-voice` | torch 2.7.1 cu128, Kokoro, Chatterbox, Qwen3-TTS, Pocket TTS, snac, faster-whisper | text to speech, voice cloning, transcription |
+| `ghcr.io/devgitflow/vgpu-voice` | torch 2.7.1 cu128, Kokoro, Chatterbox, Qwen3-TTS, Pocket TTS, snac, faster-whisper, Ming 3.0 TTS (own environment at /opt/ming) | text to speech, voice cloning, transcription |
 | `ghcr.io/devgitflow/vgpu-avatar` | torch 2.8.0 cu128, TensorRT 10, onnxruntime-gpu, LivePortrait, Ditto | talking head avatars |
 | `ghcr.io/devgitflow/vgpu-llm` | Ollama, llama.cpp and whisper.cpp built for sm_89 and sm_120 | LLM serving, fast speech recognition |
 | `ghcr.io/devgitflow/vgpu-train` | torch 2.8.0 cu128, Unsloth, TRL, PEFT, bitsandbytes, DeepSpeed, diffusers, ai-toolkit | LLM fine tuning, image and video LoRA training |

@@ -29,6 +29,18 @@ RUN python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__vers
 # StrictModes rejects it ("bad ownership or modes"). Single user container, so turn the check off.
 RUN mkdir -p /root/.ssh /etc/ssh/sshd_config.d && chmod 700 /root/.ssh \
     && printf 'StrictModes no\n' > /etc/ssh/sshd_config.d/vgpu.conf
+# FramePack pins diffusers 0.33, transformers 4.46 and numpy 1.26 (Wan2GP needs 0.36, 4.54 and numpy 2.1),
+# so it gets its own environment on the same torch 2.10 cu130 stack it ran on before:
+#   cd /opt/FramePack && /opt/framepack/bin/python demo_gradio.py --server 0.0.0.0 --port 7861
+RUN git clone --depth 1 https://github.com/lllyasviel/FramePack /opt/FramePack \
+    && uv venv --python 3.11 /opt/framepack \
+    && uv pip install --python /opt/framepack/bin/python torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0 --index-url https://download.pytorch.org/whl/cu130 \
+    && uv pip install --python /opt/framepack/bin/python -r /opt/FramePack/requirements.txt hf_transfer \
+       https://github.com/deepbeepmeep/SageAttention/releases/download/v2.2.0-linux.cg1/sageattention-2.2.0+cu130torch2.10.0.cg1-cp311-cp311-linux_x86_64.whl \
+    && uv pip install --python /opt/framepack/bin/python torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0 \
+       --reinstall-package torch --reinstall-package torchvision --reinstall-package torchaudio --index-url https://download.pytorch.org/whl/cu130 \
+    && /opt/framepack/bin/python -c "import torch, diffusers, transformers, sageattention; print('framepack env', torch.__version__, diffusers.__version__)"
+EXPOSE 7861
 WORKDIR /workspace
 EXPOSE 7860
 LABEL org.opencontainers.image.source=https://github.com/devgitflow/vgpu-images

@@ -20,6 +20,17 @@ RUN $UVP "setuptools<81" wheel numpy soundfile librosa transformers accelerate s
     && $UVP torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128
 # Kokoro's English front end (misaki) loads this spaCy model at first use; fetching it on the box cost 30 s
 RUN python -m spacy download en_core_web_sm || $UVP en_core_web_sm@https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+# Ming 3.0 TTS pins transformers 4.46 and diffusers 0.33, which clash with the stack above, and torch 2.6, which
+# has no Blackwell kernels. Its own environment on torch 2.7.1 cu128, as it ran before:
+#   /opt/ming/bin/python  with  sys.path.insert(0, "/opt/Ming-3.0-tts")
+RUN git clone --depth 1 https://github.com/inclusionAI/Ming-3.0-tts /opt/Ming-3.0-tts \
+    && uv venv --python 3.11 /opt/ming \
+    && uv pip install --python /opt/ming/bin/python torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128 \
+    && cd /opt/Ming-3.0-tts && grep -viE '^(torch|torchaudio|torchvision)[=<> ]' requirements.txt > req_vgpu.txt \
+    && uv pip install --python /opt/ming/bin/python -r req_vgpu.txt hf_transfer \
+    && uv pip install --python /opt/ming/bin/python torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 \
+       --reinstall-package torch --reinstall-package torchvision --reinstall-package torchaudio --index-url https://download.pytorch.org/whl/cu128 \
+    && cd /opt/Ming-3.0-tts && /opt/ming/bin/python -c "import sys; sys.path.insert(0,'.'); import ming_tts, tts_tasks, torch; print('ming env ok', torch.__version__)"
 RUN python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, f); assert 'sm_120' in f" \
     && python -c "import kokoro, faster_whisper, chatterbox, snac, transformers; print('voice imports ok')"
 
