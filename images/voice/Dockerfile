@@ -3,7 +3,7 @@
 FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04
 
 ENV NVIDIA_DRIVER_CAPABILITIES=all DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 LC_ALL=C.UTF-8 \
-    PIP_NO_CACHE_DIR=1 UV_NO_CACHE=1 UV_LINK_MODE=copy UV_PYTHON_INSTALL_DIR=/opt/python \
+    PIP_NO_CACHE_DIR=1 UV_EXTRA_INDEX_URL=https://download.pytorch.org/whl/cu128 UV_INDEX_STRATEGY=unsafe-best-match UV_NO_CACHE=1 UV_LINK_MODE=copy UV_PYTHON_INSTALL_DIR=/opt/python \
     PATH=/opt/venv/bin:$PATH HF_HUB_ENABLE_HF_TRANSFER=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -12,12 +12,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh \
     && uv venv --python 3.11 /opt/venv
 ENV UVP="uv pip install --python /opt/venv/bin/python"
-RUN $UVP torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128
-RUN $UVP "setuptools<81" wheel numpy soundfile librosa transformers accelerate safetensors huggingface_hub hf_transfer \
+RUN $UVP torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128 && uv pip freeze --python /opt/venv/bin/python | grep -iE '^(torch|torchvision|torchaudio|triton|nvidia-)' > /opt/torch.txt && cat /opt/torch.txt
+RUN $UVP -c /opt/torch.txt "setuptools<81" wheel numpy soundfile librosa transformers accelerate safetensors huggingface_hub hf_transfer \
       fastapi uvicorn pydantic einops omegaconf conformer diffusers resemble-perth s3tokenizer snac \
       faster-whisper kokoro "misaki[en]" qwen-tts pocket-tts \
-    && $UVP --no-deps chatterbox-tts==0.1.7 \
-    && $UVP torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128
+    && $UVP --no-deps chatterbox-tts==0.1.7
 # Kokoro's English front end (misaki) loads this spaCy model at first use; fetching it on the box cost 30 s
 RUN python -m spacy download en_core_web_sm || $UVP en_core_web_sm@https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 # Ming 3.0 TTS pins transformers 4.46 and diffusers 0.33, which clash with the stack above, and torch 2.6, which
@@ -26,10 +25,9 @@ RUN python -m spacy download en_core_web_sm || $UVP en_core_web_sm@https://githu
 RUN git clone --depth 1 https://github.com/inclusionAI/Ming-3.0-tts /opt/Ming-3.0-tts \
     && uv venv --python 3.11 /opt/ming \
     && uv pip install --python /opt/ming/bin/python torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128 \
+    && uv pip freeze --python /opt/ming/bin/python | grep -iE '^(torch|torchvision|torchaudio|triton|nvidia-)' > /opt/ming-torch.txt && cat /opt/ming-torch.txt \
     && cd /opt/Ming-3.0-tts && grep -viE '^(torch|torchaudio|torchvision)[=<> ]' requirements.txt > req_vgpu.txt \
-    && uv pip install --python /opt/ming/bin/python -r req_vgpu.txt hf_transfer \
-    && uv pip install --python /opt/ming/bin/python torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 \
-       --reinstall-package torch --reinstall-package torchvision --reinstall-package torchaudio --index-url https://download.pytorch.org/whl/cu128 \
+    && uv pip install --python /opt/ming/bin/python -c /opt/ming-torch.txt -r req_vgpu.txt hf_transfer \
     && cd /opt/Ming-3.0-tts && /opt/ming/bin/python -c "import sys; sys.path.insert(0,'.'); import ming_tts, tts_tasks, torch; print('ming env ok', torch.__version__)"
 RUN python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, f); assert 'sm_120' in f" \
     && python -c "import kokoro, faster_whisper, chatterbox, snac, transformers; print('voice imports ok')"

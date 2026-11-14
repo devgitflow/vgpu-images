@@ -4,7 +4,7 @@
 FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04
 
 ENV NVIDIA_DRIVER_CAPABILITIES=all DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 LC_ALL=C.UTF-8 \
-    PIP_NO_CACHE_DIR=1 UV_NO_CACHE=1 UV_LINK_MODE=copy PATH=/opt/venv/bin:$PATH \
+    PIP_NO_CACHE_DIR=1 UV_EXTRA_INDEX_URL=https://download.pytorch.org/whl/cu128 UV_INDEX_STRATEGY=unsafe-best-match UV_NO_CACHE=1 UV_LINK_MODE=copy PATH=/opt/venv/bin:$PATH \
     HF_HUB_ENABLE_HF_TRANSFER=1 COMFY=/opt/ComfyUI
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -13,26 +13,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m venv /opt/venv && pip install -U pip uv
+# torch is installed once and locked: later installs must respect /opt/torch.txt, so no reinstall
+# (a final reinstall used to store torch twice, about 4 GB more to pull)
 RUN uv pip install --python /opt/venv/bin/python torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 \
-      --index-url https://download.pytorch.org/whl/cu128
+      --index-url https://download.pytorch.org/whl/cu128 && uv pip freeze --python /opt/venv/bin/python | grep -iE '^(torch|torchvision|torchaudio|triton|nvidia-)' > /opt/torch.txt && cat /opt/torch.txt
 
 ARG COMFY_REF=v0.43.0
 RUN git clone https://github.com/comfyanonymous/ComfyUI $COMFY \
     && (cd $COMFY && (git checkout -q "$COMFY_REF" || echo "ref $COMFY_REF not found, staying on default branch") \
         && git log -1 --format='ComfyUI %H %cd') \
-    && uv pip install --python /opt/venv/bin/python -r $COMFY/requirements.txt
+    && uv pip install --python /opt/venv/bin/python -c /opt/torch.txt -r $COMFY/requirements.txt
 
 # custom nodes used for the Wan, InfiniteTalk and foley work
 RUN cd $COMFY/custom_nodes && for r in \
       Kosinkadink/ComfyUI-VideoHelperSuite kijai/ComfyUI-KJNodes kijai/ComfyUI-WanVideoWrapper \
       kijai/ComfyUI-MMAudio city96/ComfyUI-GGUF; do \
       git clone --depth 1 https://github.com/$r || exit 1; done \
-    && for d in */; do [ -f "$d/requirements.txt" ] && uv pip install --python /opt/venv/bin/python -r "$d/requirements.txt" || true; done
+    && for d in */; do [ -f "$d/requirements.txt" ] && uv pip install --python /opt/venv/bin/python -c /opt/torch.txt -r "$d/requirements.txt" || true; done
 
-RUN uv pip install --python /opt/venv/bin/python sageattention==1.0.6 hf_transfer huggingface_hub \
-    && uv pip install --python /opt/venv/bin/python torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --reinstall \
-      --index-url https://download.pytorch.org/whl/cu128 \
-    && (/opt/venv/bin/python -m pip list 2>/dev/null || uv pip list --python /opt/venv/bin/python) | grep -iE '^(torch|nvidia)'
+RUN uv pip install --python /opt/venv/bin/python -c /opt/torch.txt sageattention==1.0.6 hf_transfer huggingface_hub \
+    && uv pip list --python /opt/venv/bin/python | grep -iE '^(torch|nvidia)'
 
 RUN python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, f); assert 'sm_120' in f" \
     && cd $COMFY && python main.py --cpu --quick-test-for-ci

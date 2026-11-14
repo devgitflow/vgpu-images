@@ -20,8 +20,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
 
-COPY build.sh /tmp/build.sh
-RUN bash /tmp/build.sh && rm /tmp/build.sh
+COPY build_a.sh build_b.sh /tmp/
+# two layers: ComfyUI and avatar (torch 2.8), then voice and Ming (torch 2.7.1); Python itself lives in layer A
+RUN bash /tmp/build_a.sh && rm /tmp/build_a.sh
+RUN bash /tmp/build_b.sh && rm /tmp/build_b.sh
 
 COPY --from=llm /opt/llm /opt/llm
 COPY --from=llm /usr/local/bin/ollama /usr/local/bin/ollama

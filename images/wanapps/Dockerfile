@@ -5,7 +5,7 @@
 FROM nvidia/cuda:13.0.0-base-ubuntu24.04
 
 ENV NVIDIA_DRIVER_CAPABILITIES=all DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 LC_ALL=C.UTF-8 \
-    PIP_NO_CACHE_DIR=1 UV_NO_CACHE=1 UV_LINK_MODE=copy UV_PYTHON_INSTALL_DIR=/opt/python \
+    PIP_NO_CACHE_DIR=1 UV_EXTRA_INDEX_URL=https://download.pytorch.org/whl/cu130 UV_INDEX_STRATEGY=unsafe-best-match UV_NO_CACHE=1 UV_LINK_MODE=copy UV_PYTHON_INSTALL_DIR=/opt/python \
     PATH=/opt/venv/bin:$PATH HF_HUB_ENABLE_HF_TRANSFER=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -14,14 +14,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh \
     && uv venv --python 3.11 /opt/venv
 RUN uv pip install --python /opt/venv/bin/python torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0 \
-      --index-url https://download.pytorch.org/whl/cu130
+      --index-url https://download.pytorch.org/whl/cu130 && uv pip freeze --python /opt/venv/bin/python | grep -iE '^(torch|torchvision|torchaudio|triton|nvidia-)' > /opt/torch.txt && cat /opt/torch.txt
 RUN git clone --depth 1 https://github.com/deepbeepmeep/Wan2GP /opt/Wan2GP \
-    && uv pip install --python /opt/venv/bin/python -r /opt/Wan2GP/requirements.txt --index-strategy unsafe-best-match \
-    && uv pip install --python /opt/venv/bin/python hf_transfer \
-       https://github.com/deepbeepmeep/SageAttention/releases/download/v2.2.0-linux.cg1/sageattention-2.2.0+cu130torch2.10.0.cg1-cp311-cp311-linux_x86_64.whl \
-    && uv pip install --python /opt/venv/bin/python torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0 --reinstall \
-      --index-url https://download.pytorch.org/whl/cu130 \
-    && (/opt/venv/bin/python -m pip list 2>/dev/null || uv pip list --python /opt/venv/bin/python) | grep -iE '^(torch|nvidia)'
+    && uv pip install --python /opt/venv/bin/python -c /opt/torch.txt -r /opt/Wan2GP/requirements.txt \
+    && uv pip install --python /opt/venv/bin/python -c /opt/torch.txt hf_transfer \
+       https://github.com/deepbeepmeep/SageAttention/releases/download/v2.2.0-linux.cg1/sageattention-2.2.0+cu130torch2.10.0.cg1-cp311-cp311-linux_x86_64.whl
 RUN python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, f); assert 'sm_120' in f; import sageattention" \
     && ls /usr/local/cuda/lib64 2>/dev/null | grep -i cublas && echo "WARNING system cuBLAS present" || echo "no system cuBLAS, good"
 
@@ -35,10 +32,9 @@ RUN mkdir -p /root/.ssh /etc/ssh/sshd_config.d && chmod 700 /root/.ssh \
 RUN git clone --depth 1 https://github.com/lllyasviel/FramePack /opt/FramePack \
     && uv venv --python 3.11 /opt/framepack \
     && uv pip install --python /opt/framepack/bin/python torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0 --index-url https://download.pytorch.org/whl/cu130 \
-    && uv pip install --python /opt/framepack/bin/python -r /opt/FramePack/requirements.txt hf_transfer \
+    && uv pip freeze --python /opt/framepack/bin/python | grep -iE '^(torch|torchvision|torchaudio|triton|nvidia-)' > /opt/fp-torch.txt && cat /opt/fp-torch.txt \
+    && uv pip install --python /opt/framepack/bin/python -c /opt/fp-torch.txt -r /opt/FramePack/requirements.txt hf_transfer \
        https://github.com/deepbeepmeep/SageAttention/releases/download/v2.2.0-linux.cg1/sageattention-2.2.0+cu130torch2.10.0.cg1-cp311-cp311-linux_x86_64.whl \
-    && uv pip install --python /opt/framepack/bin/python torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0 \
-       --reinstall-package torch --reinstall-package torchvision --reinstall-package torchaudio --index-url https://download.pytorch.org/whl/cu130 \
     && /opt/framepack/bin/python -c "import torch, diffusers, transformers, sageattention; print('framepack env', torch.__version__, diffusers.__version__)"
 EXPOSE 7861
 WORKDIR /workspace
