@@ -1,0 +1,47 @@
+name: pull-bench
+# Builds two byte-different copies of the torch image, one gzip and one with our own layers in zstd,
+# so vgpu can time real pulls of each on fresh Vast hosts.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: run tag, used to make the copies unique
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: make room
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache /usr/local/share/boost || true
+          sudo swapoff -a || true; sudo rm -f /mnt/swapfile || true
+          sudo systemctl stop docker docker.socket containerd || true
+          for d in docker containerd; do sudo mkdir -p /mnt/$d
+            if [ -d /var/lib/$d ] && [ ! -L /var/lib/$d ]; then sudo rsync -a /var/lib/$d/ /mnt/$d/ && sudo rm -rf /var/lib/$d; fi
+            sudo ln -sfn /mnt/$d /var/lib/$d; done
+          sudo systemctl start containerd docker
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: gzip copy
+        uses: docker/build-push-action@v6
+        with:
+          context: images/torch
+          build-args: BUST=gzip-${{ github.event.inputs.tag }}
+          outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/vgpu-bench:gzip-${{ github.event.inputs.tag }},push=true,compression=gzip,oci-mediatypes=true
+      - name: zstd copy (our layers zstd, base layers left as published)
+        uses: docker/build-push-action@v6
+        with:
+          context: images/torch
+          build-args: BUST=zstd-${{ github.event.inputs.tag }}
+          outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/vgpu-bench:zstd-${{ github.event.inputs.tag }},push=true,compression=zstd,compression-level=3,force-compression=false,oci-mediatypes=true

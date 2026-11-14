@@ -1,5 +1,8 @@
 # PyTorch for Blackwell (cu128 wheels) + video tools. Used for model inference jobs.
 FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu24.04
+# BUST lets a pull benchmark build byte-different copies of this image (default leaves it unchanged)
+ARG BUST=0
+RUN echo "$BUST" > /etc/vgpu-bust
 
 ENV NVIDIA_DRIVER_CAPABILITIES=all DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 LC_ALL=C.UTF-8 PIP_NO_CACHE_DIR=1 \
     PIP_BREAK_SYSTEM_PACKAGES=1 HF_HUB_ENABLE_HF_TRANSFER=1
