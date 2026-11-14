@@ -29,7 +29,7 @@ RUN git clone --depth 1 https://github.com/ostris/ai-toolkit /opt/ai-toolkit \
     && /opt/aitk/bin/python -c "import torch, numpy; print('aitk env', torch.__version__, numpy.__version__)"
 # some kernels (torchao, mslk) load the GPU driver library on import; the build machine has no GPU, so the check
 # runs against the CUDA stub driver. On a rented box the real driver is mounted.
-RUN mkdir -p /tmp/stub && ln -sf /usr/local/cuda/lib64/stubs/libcuda.so /tmp/stub/libcuda.so.1 \
+RUN mkdir -p /tmp/stub && for f in /usr/local/cuda/lib64/stubs/*.so; do ln -sf "$f" "/tmp/stub/$(basename "$f").1"; done \
     && LD_LIBRARY_PATH=/tmp/stub:$LD_LIBRARY_PATH python -c "import torch; f=torch._C._cuda_getArchFlags(); print(torch.__version__, f); assert 'sm_120' in f; import trl, peft, bitsandbytes, diffusers, datasets; print('train imports ok')" \
     && rm -rf /tmp/stub
 
